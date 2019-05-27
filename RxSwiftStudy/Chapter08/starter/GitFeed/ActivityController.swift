@@ -82,10 +82,10 @@ class ActivityController: UITableViewController {
 			.flatMap { request -> Observable<(response: HTTPURLResponse, data: Data)> in
 				return URLSession.shared.rx.response(request: request)
 			}
-			.filter { response, _ in
-				return 200..<300 ~= response.statusCode
-			}
-			.flatMap { _, data -> Observable<String> in
+			.flatMap { response, data -> Observable<String> in
+				guard 200..<300 ~= response.statusCode else {
+					return Observable.empty()
+				}
 				let decoder = JSONDecoder()
 				let repo = try? decoder.decode(Repository.self, from: data)
 				guard let _items = repo?.items else {
