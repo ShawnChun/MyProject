@@ -32,28 +32,42 @@ import RxCocoa
 import MapKit
 import CoreLocation
 
+typealias Weather = ApiController.Weather
+
 class ViewController: UIViewController {
-	@IBOutlet private var searchCityName: UITextField!
-	@IBOutlet private var tempLabel: UILabel!
-	@IBOutlet private var humidityLabel: UILabel!
-	@IBOutlet private var iconLabel: UILabel!
-	@IBOutlet private var cityNameLabel: UILabel!
-	@IBOutlet private var geoLocationButton: UIButton!
-	@IBOutlet private var mapView: MKMapView!
-	@IBOutlet private var mapButton: UIButton!
+	@IBOutlet private weak var searchCityName: UITextField!
+	@IBOutlet private weak var tempLabel: UILabel!
+	@IBOutlet private weak var humidityLabel: UILabel!
+	@IBOutlet private weak var iconLabel: UILabel!
+	@IBOutlet private weak var cityNameLabel: UILabel!
+	@IBOutlet private weak var geoLocationButton: UIButton!
+	@IBOutlet private weak var mapView: MKMapView!
+	@IBOutlet private weak var mapButton: UIButton!
+	@IBOutlet private weak var keyButton: UIButton!
 	
-	@IBOutlet private var tempSwitch: UISwitch!
-	@IBOutlet private var activityIndicator: UIActivityIndicatorView!
+	@IBOutlet private weak var tempSwitch: UISwitch!
+	@IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
 	
-	let locationManager = CLLocationManager()
-	
-	var disposeBag = DisposeBag()
+	private let locationManager = CLLocationManager()
+	private var disposeBag = DisposeBag()
+	var cache = [String: Weather]()
+	private var keyTextField: UITextField?
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
 		
 		style()
+		
+		if !RxReachability.shared.startMonitor("openweathermap.org") {
+			print("Reachability failed!")
+		}
+		
+		keyButton.rx.tap
+			.subscribe(onNext: { [weak self] _ in
+				self?.requestKey()
+			})
+			.disposed(by: disposeBag)
 		
 		let currentLocation = locationManager.rx.didUpdateLocations
 			.map { $0[0] }
@@ -63,6 +77,7 @@ class ViewController: UIViewController {
 			.do(onNext: { [weak self] _ in
 				self?.locationManager.requestWhenInUseAuthorization()
 				self?.locationManager.startUpdatingLocation()
+				self?.searchCityName.text = "Current Location"
 			})
 		
 		let geoLocation = geoInput.flatMap {
@@ -74,14 +89,48 @@ class ViewController: UIViewController {
 				.catchErrorJustReturn(.dummy)
 		}
 		
+		let maxAttempts = 4
+		
+		let retryHandler: (Observable<Error>) -> Observable<Int> = { e in
+			return e.enumerated().flatMap { attempt, error -> Observable<Int> in
+				if attempt >= maxAttempts - 1 {
+					return Observable.error(error)
+				} else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
+					return ApiController.shared.apiKey
+						.filter { !$0.isEmpty }
+						.map { _ in 1 }
+				} else if (error as NSError).code == -1009 {
+					return RxReachability.shared.status
+						.filter { $0 == .online }
+						.map { _ in 1 }
+				}
+				print("== retrying after \(attempt + 1) seconds ==")
+				return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler()).take(1)
+			}
+		}
+		
 		let searchInput = searchCityName.rx.controlEvent(.editingDidEndOnExit)
 			.map { self.searchCityName.text ?? "" }
 			.filter { !$0.isEmpty }
 		
-		let textSearch = searchInput.debug().flatMap { text in
-			return ApiController.shared.currentWeather(city: text)
-				.catchErrorJustReturn(.dummy)
+		let textSearch = searchInput.flatMap { text in
+			return ApiController.shared.currentWeather(city: text).debug()
+				.observeOn(MainScheduler())
+				.do(onNext: { [weak self] data in
+					self?.cache[text] = data
+				}, onError: { [weak self] e in
+					self?.showError(error: e)
+				})
+//				.retry(3)
+				.retryWhen(retryHandler)
+				.catchError { error in
+					guard let cachedData = self.cache[text] else {
+						return Observable.just(Weather.empty)
+					}
+					return Observable.just(cachedData)
+				}
 		}
+		.share(replay: 0, scope: .whileConnected)
 		
 		let mapInput = mapView.rx.regionDidChangeAnimated
 			.skip(1)
@@ -93,7 +142,7 @@ class ViewController: UIViewController {
 		}
 		
 		let tempTypeInput = tempSwitch.rx.controlEvent(.valueChanged)
-			.map { self.cityNameLabel.text ?? "" }
+			.map { [unowned self] _ in self.cityNameLabel.text ?? "" }
 			.filter { !$0.isEmpty }
 		
 		let tempSwitchSearch = tempTypeInput.flatMap { text in
@@ -163,20 +212,20 @@ class ViewController: UIViewController {
 			.disposed(by: disposeBag)
 		
 		mapButton.rx.tap
-			.subscribe(onNext: {
+			.subscribe(onNext: { [unowned self] _ in 
 				self.mapView.isHidden.toggle()
 			})
 			.disposed(by: disposeBag)
 		
 		mapView.rx.setDelegate(self)
 			.disposed(by: disposeBag)
-		
+		/**
 		textSearch.asDriver(onErrorJustReturn: .dummy)
 			.map { $0.coordinate }
 			.drive(mapView.rx.location)
 			.disposed(by: disposeBag)
 		
-		mapInput.debug().flatMap { coordinate in
+		mapInput.flatMap { coordinate in
 			return ApiController.shared.currentWeatherAround(location: coordinate)
 				.catchErrorJustReturn([])
 			}
@@ -184,6 +233,7 @@ class ViewController: UIViewController {
 			.map { $0.map { $0.overlay() } }
 			.drive(mapView.rx.overlays)
 			.disposed(by: disposeBag)
+		*/
 	}
 	
 	override func viewDidAppear(_ animated: Bool) {
@@ -203,6 +253,43 @@ class ViewController: UIViewController {
 	override func didReceiveMemoryWarning() {
 		super.didReceiveMemoryWarning()
 		// Dispose of any resources that can be recreated.
+	}
+	
+	private func requestKey() {
+		func configurationTextField(textField: UITextField!) {
+			self.keyTextField = textField
+		}
+		
+		let alert = UIAlertController(title: "Api Key",
+									  message: "Add the api key:",
+									  preferredStyle: UIAlertController.Style.alert)
+		
+		alert.addTextField(configurationHandler: configurationTextField)
+		
+		alert.addAction(UIAlertAction(title: "Ok", style: .default) { [weak self] _ in
+			ApiController.shared.apiKey.onNext(self?.keyTextField?.text ?? "")
+		})
+		
+		alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.destructive))
+		
+		self.present(alert, animated: true)
+	}
+	
+	private func showError(error e: Error) {
+		if let e = e as? ApiController.ApiError {
+			switch e {
+			case .invalidKey:
+				InfoView.showIn(viewController: self, message: "Key is invalid")
+			case .cityNotFound:
+				InfoView.showIn(viewController: self, message: "City Name is invalid")
+			case .serverFailure:
+				InfoView.showIn(viewController: self, message: "Server error")
+			}
+		} else if (e as NSError).code == -1009 {
+			InfoView.showIn(viewController: self, message: "\(e.localizedDescription)")
+		} else {
+			InfoView.showIn(viewController: self, message: "An error occurred")
+		}
 	}
 	
 	// MARK: - Style

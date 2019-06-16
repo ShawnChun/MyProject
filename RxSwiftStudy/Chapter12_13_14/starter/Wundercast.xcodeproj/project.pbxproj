@@ -10,6 +10,9 @@
 		410B09A83CAF27B6032B7631 /* Pods_Wundercast.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9EE338960399798131E4FCA /* Pods_Wundercast.framework */; };
 		4792A5D222B2AEE6005E517F /* CLLocationManager+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4792A5D022B2AEE6005E517F /* CLLocationManager+Rx.swift */; };
 		4792A5D322B2AEE6005E517F /* MKMapView+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4792A5D122B2AEE6005E517F /* MKMapView+Rx.swift */; };
+		47D832E222B5FC2300C7F927 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D832E022B5FC2300C7F927 /* InfoView.swift */; };
+		47D832E322B5FC2300C7F927 /* InfoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 47D832E122B5FC2300C7F927 /* InfoView.xib */; };
+		47D832E522B630C500C7F927 /* RxReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D832E422B630C500C7F927 /* RxReachability.swift */; };
 		CB4D69411DE9A7D100DC0488 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4D69401DE9A7D100DC0488 /* AppDelegate.swift */; };
 		CB4D69431DE9A7D100DC0488 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4D69421DE9A7D100DC0488 /* ViewController.swift */; };
 		CB4D69461DE9A7D100DC0488 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB4D69441DE9A7D100DC0488 /* Main.storyboard */; };
@@ -26,6 +29,9 @@
 /* Begin PBXFileReference section */
 		4792A5D022B2AEE6005E517F /* CLLocationManager+Rx.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CLLocationManager+Rx.swift"; sourceTree = "<group>"; };
 		4792A5D122B2AEE6005E517F /* MKMapView+Rx.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MKMapView+Rx.swift"; sourceTree = "<group>"; };
+		47D832E022B5FC2300C7F927 /* InfoView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
+		47D832E122B5FC2300C7F927 /* InfoView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InfoView.xib; sourceTree = "<group>"; };
+		47D832E422B630C500C7F927 /* RxReachability.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RxReachability.swift; sourceTree = "<group>"; };
 		CB4D693D1DE9A7D100DC0488 /* Wundercast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wundercast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB4D69401DE9A7D100DC0488 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CB4D69421DE9A7D100DC0488 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -61,9 +67,20 @@
 			children = (
 				4792A5D022B2AEE6005E517F /* CLLocationManager+Rx.swift */,
 				4792A5D122B2AEE6005E517F /* MKMapView+Rx.swift */,
+				47D832E422B630C500C7F927 /* RxReachability.swift */,
 			);
 			name = Extensions;
 			path = wundercast/Extensions;
+			sourceTree = SOURCE_ROOT;
+		};
+		47D832DF22B5FC2300C7F927 /* InfoView */ = {
+			isa = PBXGroup;
+			children = (
+				47D832E022B5FC2300C7F927 /* InfoView.swift */,
+				47D832E122B5FC2300C7F927 /* InfoView.xib */,
+			);
+			name = InfoView;
+			path = wundercast/Utils/InfoView;
 			sourceTree = SOURCE_ROOT;
 		};
 		54A948E678EBEC1CD9642BF9 /* Pods */ = {
@@ -130,6 +147,7 @@
 		CB4D69641DE9AD2A00DC0488 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				47D832DF22B5FC2300C7F927 /* InfoView */,
 				CB4D696E1DE9C70100DC0488 /* Appearance.swift */,
 				CB4D696F1DE9C70100DC0488 /* Colors.swift */,
 			);
@@ -211,6 +229,7 @@
 				CB4D696B1DE9AD7C00DC0488 /* LICENSE in Resources */,
 				CB4D694B1DE9A7D100DC0488 /* LaunchScreen.storyboard in Resources */,
 				CB4D69481DE9A7D100DC0488 /* Assets.xcassets in Resources */,
+				47D832E322B5FC2300C7F927 /* InfoView.xib in Resources */,
 				CB4D69611DE9A7F100DC0488 /* Podfile in Resources */,
 				CB4D69461DE9A7D100DC0488 /* Main.storyboard in Resources */,
 				CB4D69691DE9AD6200DC0488 /* weather.ttf in Resources */,
@@ -269,6 +288,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				47D832E222B5FC2300C7F927 /* InfoView.swift in Sources */,
 				CB4D69431DE9A7D100DC0488 /* ViewController.swift in Sources */,
 				CB4D69711DE9C70100DC0488 /* Colors.swift in Sources */,
 				CB4D69411DE9A7D100DC0488 /* AppDelegate.swift in Sources */,
@@ -276,6 +296,7 @@
 				4792A5D222B2AEE6005E517F /* CLLocationManager+Rx.swift in Sources */,
 				CB4D69661DE9AD3300DC0488 /* ApiController.swift in Sources */,
 				CB4D69701DE9C70100DC0488 /* Appearance.swift in Sources */,
+				47D832E522B630C500C7F927 /* RxReachability.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

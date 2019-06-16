@@ -111,7 +111,8 @@ class ApiController {
 	
 	/// The api key to communicate with openweathermap.org
 	/// Create you own on https://home.openweathermap.org/users/sign_up
-	private let apiKey = "efe536925771e8cadb1f12b130071076"
+	let apiKey = BehaviorSubject(value: "")
+//	let apiKey = BehaviorSubject(value: "efe536925771e8cadb1f12b130071076")
 	
 	/// API base URL
 	let baseURL = URL(string: "http://api.openweathermap.org/data/2.5")!
@@ -120,6 +121,12 @@ class ApiController {
 		Logging.URLRequests = { request in
 			return true
 		}
+	}
+	
+	enum ApiError: Error {
+		case cityNotFound
+		case serverFailure
+		case invalidKey
 	}
 	
 	// MARK: - Api Calls
@@ -167,30 +174,48 @@ class ApiController {
 	* Private method to build a request with RxCocoa
 	*/
 	private func buildRequest(method: String = "GET", pathComponent: String, params: [(String, String)]) -> Observable<Data> {
-		let url = baseURL.appendingPathComponent(pathComponent)
-		var request = URLRequest(url: url)
-		let keyQueryItem = URLQueryItem(name: "appid", value: apiKey)
-		let urlComponents = NSURLComponents(url: url, resolvingAgainstBaseURL: true)!
-		
-		if method == "GET" {
-			var queryItems = params.map { URLQueryItem(name: $0.0, value: $0.1) }
-			queryItems.append(keyQueryItem)
-			urlComponents.queryItems = queryItems
-		} else {
-			urlComponents.queryItems = [keyQueryItem]
+		let request: Observable<URLRequest> = Observable.create() { [unowned self] observer in
+			let url = self.baseURL.appendingPathComponent(pathComponent)
+			var request = URLRequest(url: url)
+			let keyQueryItem = URLQueryItem(name: "appid", value: try? self.apiKey.value())
+			let urlComponents = NSURLComponents(url: url, resolvingAgainstBaseURL: true)!
 			
-			let jsonData = try! JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
-			request.httpBody = jsonData
+			if method == "GET" {
+				var queryItems = params.map { URLQueryItem(name: $0.0, value: $0.1) }
+				queryItems.append(keyQueryItem)
+				urlComponents.queryItems = queryItems
+			} else {
+				urlComponents.queryItems = [keyQueryItem]
+				
+				let jsonData = try! JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
+				request.httpBody = jsonData
+			}
+			request.url = urlComponents.url!
+			request.httpMethod = method
+			request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+			
+			observer.onNext(request)
+			observer.onCompleted()
+			
+			return Disposables.create()
 		}
-		
-		request.url = urlComponents.url!
-		request.httpMethod = method
-		
-		request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let session = URLSession.shared
 		
-		return session.rx.data(request: request)
+		return request.flatMap { request in
+			return session.rx.response(request: request).map { response, data in
+				switch response.statusCode {
+				case 200 ..< 300:
+					return data
+				case 401:
+					throw ApiError.invalidKey
+				case 400 ..< 500:
+					throw ApiError.cityNotFound
+				default:
+					throw ApiError.serverFailure
+				}
+			}
+		}
 	}
 	
 }

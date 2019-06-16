@@ -75,7 +75,7 @@
                                 </constraints>
                                 <state key="normal" image="place-location"/>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Yzv-fV-QCf">
+                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Yzv-fV-QCf">
                                 <rect key="frame" x="315" y="612" width="44" height="44"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="44" id="9QH-3v-8YI"/>
@@ -89,6 +89,13 @@
                             <mapView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="TU2-pb-2MR">
                                 <rect key="frame" x="0.0" y="20" width="375" height="587"/>
                             </mapView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ebo-u8-YeT">
+                                <rect key="frame" x="315" y="612" width="44" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="nuD-l0-emU"/>
+                                </constraints>
+                                <state key="normal" image="key"/>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -102,6 +109,7 @@
                             <constraint firstItem="TU2-pb-2MR" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="FrW-Pm-zmm"/>
                             <constraint firstAttribute="trailing" secondItem="jQQ-9b-2rA" secondAttribute="trailing" constant="32" id="I7g-p4-Sbb"/>
                             <constraint firstItem="x4a-i8-beX" firstAttribute="leading" secondItem="jQQ-9b-2rA" secondAttribute="leading" id="Ice-tx-Qny"/>
+                            <constraint firstItem="Ebo-u8-YeT" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="Ktf-E0-CkR"/>
                             <constraint firstItem="CvG-51-WJq" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="LfL-fC-hE2"/>
                             <constraint firstItem="CvG-51-WJq" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="16" id="LuH-bS-Wr5"/>
                             <constraint firstItem="jQQ-9b-2rA" firstAttribute="top" secondItem="aYm-dp-fOW" secondAttribute="bottom" constant="8" id="MFT-Kh-TpX"/>
@@ -114,6 +122,8 @@
                             <constraint firstItem="jQQ-9b-2rA" firstAttribute="top" secondItem="x4a-i8-beX" secondAttribute="bottom" constant="8" id="VFJ-kt-pMI"/>
                             <constraint firstItem="jQQ-9b-2rA" firstAttribute="leading" secondItem="HZ1-QZ-iLs" secondAttribute="leading" id="YcB-zk-BZ0"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="fHF-Q3-Xeb" secondAttribute="bottom" constant="11" id="cH3-pr-URR"/>
+                            <constraint firstItem="Ebo-u8-YeT" firstAttribute="width" secondItem="Ebo-u8-YeT" secondAttribute="height" multiplier="1:1" id="eMj-4B-S6t"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="Ebo-u8-YeT" secondAttribute="bottom" constant="11" id="m9b-Td-Emj"/>
                             <constraint firstItem="TU2-pb-2MR" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="ogH-Yl-06h"/>
                             <constraint firstItem="Yzv-fV-QCf" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="pbg-b8-Sc4"/>
                             <constraint firstAttribute="trailingMargin" secondItem="CvG-51-WJq" secondAttribute="trailing" id="rE1-nx-616"/>
@@ -127,6 +137,7 @@
                         <outlet property="geoLocationButton" destination="fHF-Q3-Xeb" id="dbm-2t-LGW"/>
                         <outlet property="humidityLabel" destination="aYm-dp-fOW" id="ACB-jg-cWC"/>
                         <outlet property="iconLabel" destination="jQQ-9b-2rA" id="CFl-ge-t02"/>
+                        <outlet property="keyButton" destination="Ebo-u8-YeT" id="miL-d7-zcN"/>
                         <outlet property="mapButton" destination="Yzv-fV-QCf" id="CzS-XG-PHv"/>
                         <outlet property="mapView" destination="TU2-pb-2MR" id="u7U-5W-ZQG"/>
                         <outlet property="searchCityName" destination="CvG-51-WJq" id="yXf-Qu-AkM"/>
@@ -140,6 +151,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="key" width="32" height="32"/>
         <image name="map" width="32" height="31"/>
         <image name="place-location" width="24" height="32"/>
     </resources>
