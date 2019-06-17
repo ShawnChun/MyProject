@@ -34,14 +34,77 @@ import RxTest
 import RxBlocking
 
 class TestingOperators : XCTestCase {
-  var scheduler: TestScheduler!
-  var subscription: Disposable!
-
-  override func setUp() {
-    super.setUp()
-  }
-
-  override func tearDown() {
-    super.tearDown()
-  }
+	var scheduler: TestScheduler!
+	var subscription: Disposable!
+	
+	override func setUp() {
+		super.setUp()
+		scheduler = TestScheduler(initialClock: 0)
+	}
+	
+	override func tearDown() {
+		scheduler.scheduleAt(1000) {
+			self.subscription.dispose()
+		}
+		super.tearDown()
+	}
+	
+	func testAmb() {
+		let observer = scheduler.createObserver(String.self)
+		let observableA = scheduler.createHotObservable([
+			next(100, "a"),
+			next(200, "b"),
+			next(300, "c")
+			])
+		let observableB = scheduler.createHotObservable([
+			next(90, "1"),
+			next(200, "2"),
+			next(300, "3")
+			])
+		let ambObservable = observableA.amb(observableB)
+		scheduler.scheduleAt(0) {
+			self.subscription = ambObservable.subscribe(observer)
+		}
+		scheduler.start()
+		let results = observer.events.map {
+			$0.value.element!
+		}
+		XCTAssertEqual(results, ["1", "2", "3"])
+	}
+	
+	func testFilter() {
+		let observer = scheduler.createObserver(Int.self)
+		let observable = scheduler.createHotObservable([
+			next(100, 1),
+			next(200, 2),
+			next(300, 3),
+			next(400, 2),
+			next(500, 1)
+			])
+		let filterObservable = observable.filter { $0 < 3 }
+		scheduler.scheduleAt(0) {
+			self.subscription = filterObservable.subscribe(observer)
+		}
+		scheduler.start()
+		let results = observer.events.map { $0.value.element! }
+		XCTAssertEqual(results, [1, 2, 2, 1])
+	}
+	
+	func testToArray() {
+		let schedular = ConcurrentDispatchQueueScheduler(qos: .default)
+		let toArrayObservable = Observable.of(1, 2).subscribeOn(schedular)
+		XCTAssertEqual(try! toArrayObservable.toBlocking().toArray(), [1, 2])
+	}
+	
+	func testToArrayMaterialized() {
+		let schedular = ConcurrentDispatchQueueScheduler(qos: .default)
+		let toArrayObservable = Observable.of(1, 2).subscribeOn(schedular)
+		let result = toArrayObservable.toBlocking().materialize()
+		switch result {
+		case .completed(elements: let elements):
+			XCTAssertEqual(elements, [1, 2])
+		case .failed(_, error: let error):
+			XCTFail(error.localizedDescription)
+		}
+	}
 }
