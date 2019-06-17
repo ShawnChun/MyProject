@@ -38,7 +38,7 @@ let animal = BehaviorSubject(value: "[dog]")
 animal
 	.subscribeOn(MainScheduler())
 	.dump()
-	//  .observeOn(globalScheduler)
+	.observeOn(globalScheduler)
 	.dumpingSubscription()
 	.disposed(by: bag)
 
@@ -57,7 +57,7 @@ fruit
 	.observeOn(MainScheduler())
 	.dumpingSubscription()
 	.disposed(by: bag)
-/**
+
 let animalsThread = Thread() {
   sleep(3)
   animal.onNext("[cat]")
@@ -71,6 +71,5 @@ let animalsThread = Thread() {
 
 animalsThread.name = "Animals Thread"
 animalsThread.start()
-*/
 
 RunLoop.main.run(until: Date(timeIntervalSinceNow: 13))
