@@ -29,9 +29,116 @@
 import Foundation
 import RxSwift
 
+fileprivate var internalCache = [String: Data]()
+
 public enum RxURLSessionError: Error {
-  case unknown
-  case invalidResponse(response: URLResponse)
-  case requestFailed(response: HTTPURLResponse, data: Data?)
-  case deserializationFailed
+	case unknown
+	case invalidAPI(description: String)
+	case invalidResponse(response: URLResponse)
+	case requestFailed(response: HTTPURLResponse, data: Data?)
+	case deserializationFailed
+}
+
+extension Reactive where Base: URLSession {
+	func response(url: URL) -> Observable<(Result<(URLResponse, Data), Error>)> {
+		return Observable.create { observer in
+			let task = self.base.dataTask(with: url) { (data, response, error) in
+				if let error = error {
+					observer.onNext(.failure(error))
+					return
+				}
+				guard let response = response, let data = data else {
+					let error = NSError(domain: "error", code: 0, userInfo: nil)
+					observer.onNext(.failure(error))
+					return
+				}
+				observer.onNext(.success((response, data)))
+				observer.onCompleted()
+			}
+			task.resume()
+			return Disposables.create(with: task.cancel)
+		}
+	}
+	
+	func response(request: URLRequest) -> Observable<(Result<(URLResponse, Data), Error>)> {
+		return Observable.create { observer in
+			let task = self.base.dataTask(with: request) { (data, response, error) in
+				if let error = error {
+					observer.onNext(.failure(error))
+					return
+				}
+				guard let response = response, let data = data else {
+					let error = NSError(domain: "error", code: 0, userInfo: nil)
+					observer.onNext(.failure(error))
+					return
+				}
+				observer.onNext(.success((response, data)))
+				observer.onCompleted()
+			}
+			task.resume()
+			return Disposables.create(with: task.cancel)
+		}
+	}
+	
+	func data(request: URLRequest) -> Observable<Data> {
+		if let url = request.url?.absoluteString, let data = internalCache[url] {
+			return Observable.just(data)
+		}
+		return response(request: request).cache().map { result -> Data in
+			switch result {
+			case .success(let (response, data)):
+				guard let httpResponse = response as? HTTPURLResponse else {
+					throw RxURLSessionError.invalidResponse(response: response)
+				}
+				guard 200..<300 ~= httpResponse.statusCode else {
+					throw RxURLSessionError.requestFailed(response: httpResponse, data: data)
+				}
+				return data
+			case .failure(let error):
+				throw RxURLSessionError.invalidAPI(description: error.localizedDescription)
+			}
+		}
+	}
+	
+	func string(request: URLRequest) -> Observable<String> {
+		return data(request: request).map { data in
+			return String(data: data, encoding: .utf8) ?? ""
+		}
+	}
+	
+	func json(request: URLRequest) -> Observable<Any> {
+		return data(request: request).map { data in
+			return try JSONSerialization.jsonObject(with: data)
+		}
+	}
+	
+	func decodable<T: Decodable>(request: URLRequest, type: T.Type) -> Observable<T> {
+		return data(request: request).map { data in
+			let decoder = JSONDecoder()
+			return try decoder.decode(type, from: data)
+		}
+	}
+	
+	func image(request: URLRequest) -> Observable<UIImage> {
+		return data(request: request).map { data in
+			return UIImage(data: data) ?? UIImage()
+		}
+	}
+}
+
+extension ObservableType where E == Result<(URLResponse, Data), Error> {
+	func cache() -> Observable<E> {
+		return self.do(onNext: { result in
+			switch result {
+			case .success(let (response, data)):
+				guard let url = response.url?.absoluteString,
+					let statusCode = (response as? HTTPURLResponse)?.statusCode,
+					200..<300 ~= statusCode else {
+						return
+				}
+				internalCache[url] = data
+			case .failure( _): break
+			}
+		})
+	}
 }
