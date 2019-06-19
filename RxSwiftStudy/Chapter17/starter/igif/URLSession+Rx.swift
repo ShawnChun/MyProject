@@ -40,26 +40,6 @@ public enum RxURLSessionError: Error {
 }
 
 extension Reactive where Base: URLSession {
-	func response(url: URL) -> Observable<(Result<(URLResponse, Data), Error>)> {
-		return Observable.create { observer in
-			let task = self.base.dataTask(with: url) { (data, response, error) in
-				if let error = error {
-					observer.onNext(.failure(error))
-					return
-				}
-				guard let response = response, let data = data else {
-					let error = NSError(domain: "error", code: 0, userInfo: nil)
-					observer.onNext(.failure(error))
-					return
-				}
-				observer.onNext(.success((response, data)))
-				observer.onCompleted()
-			}
-			task.resume()
-			return Disposables.create(with: task.cancel)
-		}
-	}
-	
 	func response(request: URLRequest) -> Observable<(Result<(URLResponse, Data), Error>)> {
 		return Observable.create { observer in
 			let task = self.base.dataTask(with: request) { (data, response, error) in
@@ -121,7 +101,10 @@ extension Reactive where Base: URLSession {
 	
 	func image(request: URLRequest) -> Observable<UIImage> {
 		return data(request: request).map { data in
-			return UIImage(data: data) ?? UIImage()
+			guard let image = UIImage(data: data) else {
+				throw RxURLSessionError.deserializationFailed
+			}
+			return image
 		}
 	}
 }
