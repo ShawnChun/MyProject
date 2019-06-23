@@ -24,6 +24,13 @@ class ViewController: UIViewController {
 			return cell
 		}
 		.disposed(by: disposeBag)
+		
+		tableView.rx
+			.modelSelected(String.self)
+			.subscribe(onNext: { model in
+				print("\(model) was selected")
+			})
+			.disposed(by: disposeBag)
 	}
 
 	override func viewDidLoad() {
