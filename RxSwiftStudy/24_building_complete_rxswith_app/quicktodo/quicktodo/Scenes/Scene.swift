@@ -30,5 +30,6 @@ import Foundation
 
 enum Scene {
 	case tasks(TasksViewModel)
-	case editTask(EditTaskViewModel)
+	case createTask(CreateTaskViewModel)
+	case pushedEditTask(PushedEditTaskViewModel)
 }

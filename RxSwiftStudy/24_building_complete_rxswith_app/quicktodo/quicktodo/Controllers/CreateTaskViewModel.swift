@@ -26,28 +26,33 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 /// THE SOFTWARE.
 
-import UIKit
+import Foundation
 import RxSwift
-import RxCocoa
 import Action
-import NSObject_Rx
 
-class EditTaskViewController: UIViewController, BindableType {
+struct CreateTaskViewModel {
 
-  @IBOutlet var titleView: UITextView!
-  @IBOutlet var okButton: UIBarButtonItem!
-  @IBOutlet var cancelButton: UIBarButtonItem!
-
-  var viewModel: EditTaskViewModel!
-
-  func bindViewModel() {
-    titleView.text = viewModel.itemTitle
-
-  }
-
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    titleView.becomeFirstResponder()
-  }
-
+	let itemTitle: String
+	let onUpdate: Action<String, Void>!
+	let onCancel: CocoaAction!
+	let disposeBag = DisposeBag()
+	
+	init(task: TaskItem, coordinator: SceneCoordinatorType, updateAction: Action<String, Void>, cancelAction: CocoaAction? = nil) {
+		itemTitle = task.title
+		onUpdate = updateAction
+		onCancel = CocoaAction {
+			if let cancelAction = cancelAction {
+				cancelAction.execute(())
+			}
+			return coordinator.pop()
+				.asObservable().map { _ in }
+		}
+		
+		onUpdate.executionObservables
+			.take(1)
+			.subscribe(onNext: { _ in
+				coordinator.pop()
+			})
+			.disposed(by: disposeBag)
+	}
 }

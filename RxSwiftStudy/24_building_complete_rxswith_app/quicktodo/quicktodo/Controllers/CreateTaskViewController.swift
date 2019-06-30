@@ -26,20 +26,33 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 /// THE SOFTWARE.
 
-import Foundation
+import UIKit
 import RxSwift
+import RxCocoa
 import Action
+import NSObject_Rx
 
-struct EditTaskViewModel {
+class CreateTaskViewController: UIViewController, BindableType {
 
-  let itemTitle: String
-  let onUpdate: Action<String, Void>!
-  let onCancel: CocoaAction!
-  let disposeBag = DisposeBag()
+  @IBOutlet var titleView: UITextView!
+  @IBOutlet var okButton: UIBarButtonItem!
+  @IBOutlet var cancelButton: UIBarButtonItem!
 
-  init(task: TaskItem, coordinator: SceneCoordinatorType, updateAction: Action<String, Void>, cancelAction: CocoaAction? = nil) {
-    itemTitle = task.title
-    onUpdate = updateAction
-    onCancel = cancelAction
+  var viewModel: CreateTaskViewModel!
+
+  func bindViewModel() {
+    titleView.text = viewModel.itemTitle
+
+		cancelButton.rx.action = viewModel.onCancel
+		okButton.rx.tap
+			.withLatestFrom(titleView.rx.text.orEmpty)
+			.subscribe(viewModel.onUpdate.inputs)
+			.disposed(by: self.rx.disposeBag)
   }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    titleView.becomeFirstResponder()
+  }
+
 }
