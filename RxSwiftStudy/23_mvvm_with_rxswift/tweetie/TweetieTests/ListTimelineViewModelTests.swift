@@ -63,12 +63,30 @@ class ListTimelineViewModelTests: XCTestCase {
       realm.add(TestData.tweets)
     }
 
-    let accountSubject = PublishSubject<TwitterAccount.AccountStatus>()
-    let viewModel = createViewModel(accountSubject.asDriver(onErrorJustReturn: .unavailable))
+		let accountSubject = PublishSubject<TwitterAccount.AccountStatus>()
+		let viewModel = createViewModel(accountSubject.asDriver(onErrorJustReturn: .unavailable))
     let result = viewModel.tweets
 
     let emitted = try! result!.toBlocking(timeout: 1).first()!
     XCTAssertTrue(emitted.0.count == 3)
   }
-
+	
+	func test_whenAccountAvailable_updatesAccountStatus() {
+		let accountSubject = PublishSubject<TwitterAccount.AccountStatus>()
+		let viewModel = createViewModel(accountSubject.asDriver(onErrorJustReturn: .unavailable))
+		
+		let loggedIn = viewModel.loggedIn.asObservable().materialize()
+		
+		DispatchQueue.main.async {
+			accountSubject.onNext(.authorized(AccessToken()))
+			accountSubject.onNext(.unavailable)
+			accountSubject.onCompleted()
+		}
+		
+		let emitted = try! loggedIn.take(3).toBlocking(timeout: 1).toArray()
+		print(emitted)
+		XCTAssertEqual(emitted[0].element, true)
+		XCTAssertEqual(emitted[1].element, false)
+		XCTAssertTrue(emitted[2].isCompleted)
+	}
 }

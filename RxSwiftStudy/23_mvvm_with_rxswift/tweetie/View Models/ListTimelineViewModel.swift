@@ -60,17 +60,29 @@ class ListTimelineViewModel {
 		
 		// fetch and store tweets
 		fetcher = TimelineFetcher(account: account, list: list, apiType: apiType)
-		bindOutput()
 		
 		fetcher.timeline
 			.subscribe(Realm.rx.add(update: true))
 			.disposed(by: bag)
+		
+		bindOutput()
 	}
 	
 	// MARK: - Methods
 	private func bindOutput() {
 		// Bind tweets
+		guard let realm = try? Realm() else {
+			return
+		}
+		tweets = Observable.changeset(from: realm.objects(Tweet.self))
 		
 		// Bind if an account is available
+		loggedIn = account.map { status in
+			switch status {
+			case .unavailable: return false
+			case .authorized: return true
+			}
+			}
+			.asDriver(onErrorJustReturn: false)
 	}
 }

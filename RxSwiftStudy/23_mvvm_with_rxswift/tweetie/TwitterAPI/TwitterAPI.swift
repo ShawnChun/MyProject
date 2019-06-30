@@ -111,7 +111,7 @@ struct TwitterAPI: TwitterAPIProtocol {
 
       guard !TwitterAccount.isLocal else {
         if let cachedFileURL = Bundle.main.url(forResource: url.safeLocalRepresentation.lastPathComponent, withExtension: nil), 
-            let data = try? Data(contentsOf: cachedFileURL), let json = try? JSONSerialization.jsonObject(with: data, options: []) as? T, let result = json {
+            let data = try? Data(contentsOf: cachedFileURL), let json = ((try? JSONSerialization.jsonObject(with: data, options: []) as? T) as T??), let result = json {
             observer.onNext(result)
         }
         observer.onCompleted()
@@ -126,7 +126,7 @@ struct TwitterAPI: TwitterAPIProtocol {
 
       request.responseJSON { response in
         guard response.error == nil, let data = response.data,
-          let json = try? JSONSerialization.jsonObject(with: data, options: []) as? T, let result = json else {
+          let json = ((try? JSONSerialization.jsonObject(with: data, options: []) as? T) as T??), let result = json else {
           observer.onError(Errors.requestFailed)
           return
         }
